@@ -140,196 +140,204 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Queue Player</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #0f0f0f;
-      color: #fff;
-    }
-    h1 { text-align: center; margin-bottom: 20px; }
-    textarea {
-      width: 100%;
-      height: 120px;
-      background: #1f1f1f;
-      color: #fff;
-      border: 1px solid #333;
-      border-radius: 8px;
-      padding: 12px;
-      font-size: 16px;
-    }
-    button {
-      margin-top: 10px;
-      padding: 12px 24px;
-      font-size: 16px;
-      background: #ff0000;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover { background: #cc0000; }
-    .player-container {
-      margin: 30px 0;
-      text-align: center;
-    }
-    #player {
-      width: 100%;
-      max-width: 900px;
-      height: 506px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    }
-    .queue {
-      margin-top: 30px;
-    }
-    .video-item {
-      display: inline-flex;
-      align-items: center;
-      background: #1f1f1f;
-      margin: 8px;
-      padding: 8px;
-      border-radius: 8px;
-      width: 320px;
-      cursor: pointer;
-    }
-    .video-item img {
-      width: 120px;
-      border-radius: 6px;
-      margin-right: 12px;
-    }
-    .video-item.active {
-      border: 3px solid #ff0000;
-    }
-    .info {
-      font-size: 14px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Multi - Riproduzione Automatica</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1100px; margin: 40px auto; padding: 20px; background: #f8f9fa; }
+        h1 { text-align: center; color: #ff0000; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input { width: 70%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; }
+        button { padding: 12px 20px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin-left: 8px; }
+        .btn-add { background: #28a745; color: white; }
+        .btn-clear { background: #dc3545; color: white; }
+        .list { margin: 20px 0; max-height: 250px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
+        .video-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin: 6px 0; background: #f8f9fa; border-radius: 6px; }
+        .preview-container { margin: 25px 0; padding: 15px; background: #000; border-radius: 12px; text-align: center; }
+        .preview-title { color: white; margin-bottom: 10px; }
+        .video-wrapper { position: relative; margin-bottom: 30px; }
+        .video-number { position: absolute; top: -12px; left: 15px; background: #ff0000; color: white; font-weight: bold; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 18px; box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
+        iframe { width: 100%; max-width: 800px; height: 450px; border-radius: 8px; }
+        textarea { width: 100%; height: 220px; font-family: monospace; margin-top: 10px; }
+    </style>
 </head>
 <body>
-  <h1>YouTube Queue Player</h1>
+    <div class="container">
+        <h1>🎥 YouTube Multi - Riproduzione Automatica</h1>
+        <div>
+            <input type="text" id="youtubeUrl" placeholder="Inserisci link YouTube... (puoi separare più link con spazi)" />
+            <button class="btn-add" onclick="aggiungiVideo()">➕ Aggiungi</button>
+        </div>
+        <div class="list" id="videoList"></div>
+        <button class="btn-clear" onclick="cancellaTutti()">🗑️ Cancella Tutti</button>
 
-  <textarea id="links" placeholder="Incolla qui i link YouTube separati da spazio o nuova riga..."></textarea>
-  <br>
-  <button onclick="loadVideos()">Carica Video e Avvia Coda</button>
+        <div id="result" style="display:none;">
+            <div class="preview-container">
+                <div class="preview-title"><strong>Anteprima - Riproduzione Sequenziale Automatica</strong></div>
+                <div id="mainPlayer"></div>
+            </div>
+            <h3>Video numerati (anteprima separata):</h3>
+            <div class="preview" id="previewContainer"></div>
+            <h3>Codice HTML:</h3>
+            <textarea id="iframeCode" readonly></textarea>
+            <button onclick="copiaCodice()">📋 Copia Codice</button>
+        </div>
+    </div>
 
-  <div class="player-container">
-    <div id="player"></div>
-  </div>
+    <script>
+        let videos = [];
+        let player;
 
-  <h2>Coda di riproduzione</h2>
-  <div id="queue" class="queue"></div>
-
-  <script>
-    let player;
-    let videos = [];
-    let currentIndex = 0;
-
-    // Carica l'API di YouTube
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    // Callback chiamato da YouTube quando l'API è pronta
-    window.onYouTubeIframeAPIReady = function() {
-      player = new YT.Player('player', {
-        height: '506',
-        width: '900',
-        videoId: '',
-        playerVars: {
-          autoplay: 1,
-          modestbranding: 1,
-          rel: 0,
-          fs: 1
-        },
-        events: {
-          'onReady': onPlayerReady,
-          'onStateChange': onPlayerStateChange
+        function estraiVideoId(url) {
+            url = url.trim();
+            const regex = [
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
+                /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?]+)/,
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/,
+                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([^?]+)/
+            ];
+            for (let r of regex) {
+                const m = url.match(r);
+                if (m && m[1]) return m[1];
+            }
+            return null;
         }
-      });
-    };
 
-    function onPlayerReady(event) {
-      if (videos.length > 0) {
-        playVideo(0);
-      }
-    }
+        // Funzione modificata per supportare più link separati da spazi
+        function aggiungiVideo() {
+            const input = document.getElementById('youtubeUrl');
+            let urls = input.value.trim().split(/\s+/);
+            let added = 0;
+            let skipped = 0;
 
-    function onPlayerStateChange(event) {
-      // Quando un video finisce (ended)
-      if (event.data === YT.PlayerState.ENDED) {
-        currentIndex++;
-        if (currentIndex < videos.length) {
-          playVideo(currentIndex);
+            for (let url of urls) {
+                if (!url) continue;
+                const id = estraiVideoId(url);
+                if (!id) {
+                    skipped++;
+                    continue;
+                }
+                if (videos.some(v => v.id === id)) {
+                    skipped++;
+                    continue;
+                }
+                videos.push({ id: id, url: url });
+                added++;
+            }
+
+            input.value = '';
+
+            if (added > 0) {
+                aggiornaTutto();
+                if (added + skipped > 1) {
+                    alert(`Aggiunti ${added} video${skipped > 0 ? ` (${skipped} saltati)` : ''}.`);
+                }
+            } else if (skipped > 0) {
+                alert("Nessun nuovo video valido da aggiungere.");
+            }
         }
-      }
-    }
 
-    function extractVideoId(url) {
-      const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&\n?#]+)/;
-      const match = url.match(regex);
-      return match ? match[1] : null;
-    }
+        function rimuoviVideo(index) {
+            videos.splice(index, 1);
+            aggiornaTutto();
+        }
 
-    function loadVideos() {
-      const input = document.getElementById('links').value.trim();
-      if (!input) return alert("Inserisci almeno un link YouTube!");
+        function aggiornaTutto() {
+            aggiornaLista();
+            aggiornaAnteprimaSeparata();
+            document.getElementById('result').style.display = videos.length > 0 ? 'block' : 'none';
+            if (videos.length > 0) {
+                caricaPlayerPrincipale();
+            }
+        }
 
-      const rawLinks = input.split(/[\s\n]+/);
-      videos = [];
+        function aggiornaLista() {
+            const list = document.getElementById('videoList');
+            list.innerHTML = videos.length === 0 ? '<p style="color:#888;text-align:center;padding:20px;">Nessun video</p>' : '';
+            videos.forEach((v, i) => {
+                const div = document.createElement('div');
+                div.className = 'video-item';
+                div.innerHTML = `<span><strong>${i+1}.</strong> ${v.url}</span> <button onclick="rimuoviVideo(${i})">Elimina</button>`;
+                list.appendChild(div);
+            });
+        }
 
-      rawLinks.forEach(link => {
-        const id = extractVideoId(link);
-        if (id) videos.push(id);
-      });
+        function aggiornaAnteprimaSeparata() {
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = '';
+            videos.forEach((v, i) => {
+                const wrap = document.createElement('div');
+                wrap.className = 'video-wrapper';
+                wrap.innerHTML = ` 
+                    <div class="video-number">${i+1}</div>
+                    <iframe src="https://www.youtube.com/embed/${v.id}" frameborder="0" allowfullscreen></iframe>
+                `;
+                container.appendChild(wrap);
+            });
+        }
 
-      if (videos.length === 0) {
-        alert("Nessun link YouTube valido trovato!");
-        return;
-      }
+        function caricaPlayerPrincipale() {
+            if (player) player.destroy();
+            const firstId = videos[0].id;
+            const playlistIds = videos.map(v => v.id).join(',');
+            player = new YT.Player('mainPlayer', {
+                height: '450',
+                width: '800',
+                videoId: firstId,
+                playerVars: {
+                    'autoplay': 1,
+                    'playlist': playlistIds,
+                    'loop': 0,
+                    'rel': 0,
+                    'modestbranding': 1
+                },
+                events: {
+                    'onReady': (e) => e.target.playVideo()
+                }
+            });
+        }
 
-      renderQueue();
-      currentIndex = 0;
-      playVideo(0);
-    }
+        function generaCodice() {
+            let html = '';
+            videos.forEach((v, i) => {
+                html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${v.id}" title="Video ${i+1}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n\n`;
+            });
+            if (videos.length > 1) {
+                const playlist = videos.map(v => v.id).join(',');
+                html += `<!-- Versione Playlist (migliore per riproduzione automatica) -->\n`;
+                html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videos[0].id}?playlist=${playlist}&autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            }
+            return html;
+        }
 
-    function playVideo(index) {
-      if (!player || index >= videos.length) return;
-      currentIndex = index;
-      player.loadVideoById(videos[index]);
-      highlightActive();
-    }
+        function copiaCodice() {
+            document.getElementById('iframeCode').value = generaCodice();
+            const textarea = document.getElementById('iframeCode');
+            textarea.select();
+            document.execCommand('copy');
+            const btn = event.target;
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✅ Copiato!';
+            setTimeout(() => btn.innerHTML = orig, 2000);
+        }
 
-    function renderQueue() {
-      const queueDiv = document.getElementById('queue');
-      queueDiv.innerHTML = '';
+        function cancellaTutti() {
+            if (confirm("Cancella tutti i video?")) {
+                videos = [];
+                aggiornaTutto();
+            }
+        }
 
-      videos.forEach((id, index) => {
-        const item = document.createElement('div');
-        item.className = 'video-item';
-        item.innerHTML = `
-          <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt="thumbnail">
-          <div class="info">
-            <strong>Video ${index + 1}</strong><br>
-            <small>https://youtu.be/${id}</small>
-          </div>
-        `;
-        item.onclick = () => playVideo(index);
-        queueDiv.appendChild(item);
-      });
-    }
+        // Carica l'API di YouTube
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-    function highlightActive() {
-      const items = document.querySelectorAll('.video-item');
-      items.forEach((item, i) => {
-        item.classList.toggle('active', i === currentIndex);
-      });
-    }
-  </script>
+        // Tasto Enter
+        document.getElementById('youtubeUrl').addEventListener('keypress', e => {
+            if (e.key === 'Enter') aggiungiVideo();
+        });
+    </script>
 </body>
 </html>
