@@ -136,41 +136,53 @@
     window.addEventListener('load', () => {
         initMining();
     });
-</script>
-<!DOCTYPE html>
+</script><!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Multi - Riproduzione Automatica</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1100px; margin: 40px auto; padding: 20px; background: #f8f9fa; }
-        h1 { text-align: center; color: #ff0000; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        input { width: 70%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; }
-        button { padding: 12px 20px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin-left: 8px; }
-        .btn-add { background: #28a745; color: white; }
-        .btn-clear { background: #dc3545; color: white; }
-        .list { margin: 20px 0; max-height: 250px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
-        .video-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin: 6px 0; background: #f8f9fa; border-radius: 6px; }
-        .preview-container { margin: 25px 0; padding: 15px; background: #000; border-radius: 12px; text-align: center; }
-        .preview-title { color: white; margin-bottom: 10px; }
-        .video-wrapper { position: relative; margin-bottom: 30px; }
-        .video-number { position: absolute; top: -12px; left: 15px; background: #ff0000; color: white; font-weight: bold; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 18px; box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
-        iframe { width: 100%; max-width: 800px; height: 450px; border-radius: 8px; }
-        textarea { width: 100%; height: 220px; font-family: monospace; margin-top: 10px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Multi - Riproduzione Automatica</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1100px; margin: 40px auto; padding: 20px; background: #f8f9fa; }
+    h1 { text-align: center; color: #ff0000; }
+    .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    input { width: 70%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px; }
+    button { padding: 12px 20px; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; margin: 5px; }
+    .btn-add { background: #28a745; color: white; }
+    .btn-clear { background: #dc3545; color: white; }
+    .btn-host { background: #007bff; color: white; }
+    .list { margin: 20px 0; max-height: 250px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 10px; }
+    .video-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin: 6px 0; background: #f8f9fa; border-radius: 6px; }
+    .preview-container { margin: 25px 0; padding: 15px; background: #000; border-radius: 12px; text-align: center; }
+    .preview-title { color: white; margin-bottom: 10px; }
+    .video-wrapper { position: relative; margin-bottom: 30px; }
+    .video-number { position: absolute; top: -12px; left: 15px; background: #ff0000; color: white; font-weight: bold; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; font-size: 18px; box-shadow: 0 3px 8px rgba(0,0,0,0.4); }
+    iframe { width: 100%; max-width: 800px; height: 450px; border-radius: 8px; }
+    textarea { width: 100%; height: 220px; font-family: monospace; margin-top: 10px; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px; }
+    .code-display { font-size: 2.5em; letter-spacing: 8px; font-weight: bold; color: #007bff; margin: 15px 0; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎥 YouTube Multi - Riproduzione Automatica</h1>
+<div class="container">
+    <h1>🎥 YouTube Multi - Riproduzione Automatica</h1>
+    
+    <div id="modeSelector">
+        <h2>Come vuoi usare l'app?</h2>
+        <button class="btn-host" onclick="startHost()">🌐 Avvia come HOST (condivisibile)</button>
+        <button onclick="startClient()">📱 Connettiti come CLIENT</button>
+        <button onclick="startStandalone()">▶️ Usa in Locale (senza controllo remoto)</button>
+    </div>
+
+    <div id="mainApp" style="display:none;">
         <div>
             <input type="text" id="youtubeUrl" placeholder="Inserisci link YouTube... (puoi separare più link con spazi)" />
             <button class="btn-add" onclick="aggiungiVideo()">➕ Aggiungi</button>
         </div>
         <div class="list" id="videoList"></div>
         <button class="btn-clear" onclick="cancellaTutti()">🗑️ Cancella Tutti</button>
-
+        
         <div id="result" style="display:none;">
             <div class="preview-container">
                 <div class="preview-title"><strong>Anteprima - Riproduzione Sequenziale Automatica</strong></div>
@@ -184,160 +196,287 @@
         </div>
     </div>
 
-    <script>
-        let videos = [];
-        let player;
+    <!-- Info Host -->
+    <div id="hostInfo" style="display:none; margin-top:15px; padding:20px; background:#d4edda; border-radius:8px; text-align:center;">
+        <strong>Codice di Connessione (4 cifre)</strong><br>
+        <div id="hostCode" class="code-display">---- </div>
+        <button onclick="copyHostCode()">📋 Copia Codice</button>
+        <small>Condividi questo codice con chi deve controllarti</small>
+    </div>
+</div>
 
-        function estraiVideoId(url) {
-            url = url.trim();
-            const regex = [
-                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
-                /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?]+)/,
-                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/,
-                /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([^?]+)/
-            ];
-            for (let r of regex) {
-                const m = url.match(r);
-                if (m && m[1]) return m[1];
-            }
-            return null;
-        }
+<!-- Modal Client -->
+<div id="clientModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Inserisci Codice Host (4 cifre)</h3>
+        <input type="text" id="clientCodeInput" maxlength="4" placeholder="1234" style="width:100%; padding:15px; font-size:28px; text-align:center; margin:15px 0;">
+        <button onclick="connectAsClient()">Connettiti</button>
+        <button onclick="closeClientModal()">Annulla</button>
+    </div>
+</div>
 
-        // Funzione modificata per supportare più link separati da spazi
-        function aggiungiVideo() {
-            const input = document.getElementById('youtubeUrl');
-            let urls = input.value.trim().split(/\s+/);
-            let added = 0;
-            let skipped = 0;
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+// ==================== VARIABILI GLOBALI ====================
+let videos = [];
+let player;
+let peer = null;
+let conn = null;
+let isHost = false;
+let currentCode = "";
 
-            for (let url of urls) {
-                if (!url) continue;
-                const id = estraiVideoId(url);
-                if (!id) {
-                    skipped++;
-                    continue;
-                }
-                if (videos.some(v => v.id === id)) {
-                    skipped++;
-                    continue;
-                }
-                videos.push({ id: id, url: url });
-                added++;
-            }
+// ==================== MODALITÀ ====================
+function generate4DigitCode() {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+}
 
-            input.value = '';
+function startHost() {
+    isHost = true;
+    currentCode = generate4DigitCode();
+    
+    document.getElementById('modeSelector').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('hostInfo').style.display = 'block';
+    document.getElementById('hostCode').textContent = currentCode;
+    
+    initPeer();
+}
 
-            if (added > 0) {
-                aggiornaTutto();
-                if (added + skipped > 1) {
-                    alert(`Aggiunti ${added} video${skipped > 0 ? ` (${skipped} saltati)` : ''}.`);
-                }
-            } else if (skipped > 0) {
-                alert("Nessun nuovo video valido da aggiungere.");
-            }
-        }
+function startClient() {
+    document.getElementById('clientModal').style.display = 'flex';
+    document.getElementById('clientCodeInput').focus();
+}
 
-        function rimuoviVideo(index) {
-            videos.splice(index, 1);
+function startStandalone() {
+    document.getElementById('modeSelector').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+}
+
+function closeClientModal() {
+    document.getElementById('clientModal').style.display = 'none';
+}
+
+function connectAsClient() {
+    let code = document.getElementById('clientCodeInput').value.trim();
+    if (code.length !== 4 || isNaN(code)) {
+        alert("Inserisci un codice di 4 cifre valido");
+        return;
+    }
+    
+    closeClientModal();
+    document.getElementById('modeSelector').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    
+    peer = new Peer();
+    peer.on('open', () => {
+        conn = peer.connect(`ytmulti-${code}`);
+        setupConnection();
+    });
+}
+
+// ==================== PEERJS ====================
+function initPeer() {
+    const peerId = `ytmulti-${currentCode}`;
+    peer = new Peer(peerId);
+    
+    peer.on('open', (id) => {
+        console.log("Host pronto con ID:", id);
+    });
+
+    peer.on('connection', (connection) => {
+        conn = connection;
+        setupConnection();
+        alert(`✅ Client connesso! (${currentCode})`);
+    });
+}
+
+function setupConnection() {
+    conn.on('open', () => console.log("Connessione stabilita"));
+    
+    conn.on('data', (data) => {
+        if (isHost) handleRemoteCommand(data);
+    });
+
+    conn.on('close', () => {
+        if (isHost) alert("Il client si è disconnesso");
+    });
+}
+
+// ==================== COMANDI REMOTI ====================
+function sendCommand(cmd) {
+    if (conn && conn.open) {
+        conn.send(cmd);
+    }
+}
+
+function handleRemoteCommand(data) {
+    switch(data.type) {
+        case 'ADD_VIDEO':
+            videos.push({ id: data.id, url: data.url });
             aggiornaTutto();
-        }
+            break;
+        case 'REMOVE_VIDEO':
+            videos.splice(data.index, 1);
+            aggiornaTutto();
+            break;
+        case 'CLEAR_ALL':
+            videos = [];
+            aggiornaTutto();
+            break;
+        case 'PLAY':
+            if (player) player.playVideo();
+            break;
+        case 'PAUSE':
+            if (player) player.pauseVideo();
+            break;
+    }
+}
 
-        function aggiornaTutto() {
-            aggiornaLista();
-            aggiornaAnteprimaSeparata();
-            document.getElementById('result').style.display = videos.length > 0 ? 'block' : 'none';
-            if (videos.length > 0) {
-                caricaPlayerPrincipale();
-            }
-        }
+// ==================== FUNZIONI ORIGINALI ====================
+function aggiungiVideo() {
+    const input = document.getElementById('youtubeUrl');
+    let urls = input.value.trim().split(/\s+/);
+    let added = 0;
 
-        function aggiornaLista() {
-            const list = document.getElementById('videoList');
-            list.innerHTML = videos.length === 0 ? '<p style="color:#888;text-align:center;padding:20px;">Nessun video</p>' : '';
-            videos.forEach((v, i) => {
-                const div = document.createElement('div');
-                div.className = 'video-item';
-                div.innerHTML = `<span><strong>${i+1}.</strong> ${v.url}</span> <button onclick="rimuoviVideo(${i})">Elimina</button>`;
-                list.appendChild(div);
-            });
-        }
+    for (let url of urls) {
+        if (!url) continue;
+        const id = estraiVideoId(url);
+        if (!id || videos.some(v => v.id === id)) continue;
+        
+        videos.push({ id: id, url: url });
+        added++;
+        
+        if (isHost) sendCommand({ type: 'ADD_VIDEO', id: id, url: url });
+    }
 
-        function aggiornaAnteprimaSeparata() {
-            const container = document.getElementById('previewContainer');
-            container.innerHTML = '';
-            videos.forEach((v, i) => {
-                const wrap = document.createElement('div');
-                wrap.className = 'video-wrapper';
-                wrap.innerHTML = ` 
-                    <div class="video-number">${i+1}</div>
-                    <iframe src="https://www.youtube.com/embed/${v.id}" frameborder="0" allowfullscreen></iframe>
-                `;
-                container.appendChild(wrap);
-            });
-        }
+    input.value = '';
+    if (added > 0) aggiornaTutto();
+}
 
-        function caricaPlayerPrincipale() {
-            if (player) player.destroy();
-            const firstId = videos[0].id;
-            const playlistIds = videos.map(v => v.id).join(',');
-            player = new YT.Player('mainPlayer', {
-                height: '450',
-                width: '800',
-                videoId: firstId,
-                playerVars: {
-                    'autoplay': 1,
-                    'playlist': playlistIds,
-                    'loop': 0,
-                    'rel': 0,
-                    'modestbranding': 1
-                },
-                events: {
-                    'onReady': (e) => e.target.playVideo()
-                }
-            });
-        }
+function rimuoviVideo(index) {
+    if (isHost) sendCommand({ type: 'REMOVE_VIDEO', index: index });
+    videos.splice(index, 1);
+    aggiornaTutto();
+}
 
-        function generaCodice() {
-            let html = '';
-            videos.forEach((v, i) => {
-                html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${v.id}" title="Video ${i+1}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n\n`;
-            });
-            if (videos.length > 1) {
-                const playlist = videos.map(v => v.id).join(',');
-                html += `<!-- Versione Playlist (migliore per riproduzione automatica) -->\n`;
-                html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videos[0].id}?playlist=${playlist}&autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-            }
-            return html;
-        }
+function cancellaTutti() {
+    if (confirm("Cancella tutti i video?")) {
+        if (isHost) sendCommand({ type: 'CLEAR_ALL' });
+        videos = [];
+        aggiornaTutto();
+    }
+}
 
-        function copiaCodice() {
-            document.getElementById('iframeCode').value = generaCodice();
-            const textarea = document.getElementById('iframeCode');
-            textarea.select();
-            document.execCommand('copy');
-            const btn = event.target;
-            const orig = btn.innerHTML;
-            btn.innerHTML = '✅ Copiato!';
-            setTimeout(() => btn.innerHTML = orig, 2000);
-        }
+function playRemote() {
+    if (isHost) sendCommand({ type: 'PLAY' });
+    else if (player) player.playVideo();
+}
 
-        function cancellaTutti() {
-            if (confirm("Cancella tutti i video?")) {
-                videos = [];
-                aggiornaTutto();
-            }
-        }
+function pauseRemote() {
+    if (isHost) sendCommand({ type: 'PAUSE' });
+    else if (player) player.pauseVideo();
+}
 
-        // Carica l'API di YouTube
-        const tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+// ==================== FUNZIONI ORIGINALI (invariate) ====================
+function estraiVideoId(url) {
+    url = url.trim();
+    const regex = [
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
+        /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?]+)/,
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/,
+        /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([^?]+)/
+    ];
+    for (let r of regex) {
+        const m = url.match(r);
+        if (m && m[1]) return m[1];
+    }
+    return null;
+}
 
-        // Tasto Enter
-        document.getElementById('youtubeUrl').addEventListener('keypress', e => {
-            if (e.key === 'Enter') aggiungiVideo();
-        });
-    </script>
+function aggiornaTutto() {
+    aggiornaLista();
+    aggiornaAnteprimaSeparata();
+    document.getElementById('result').style.display = videos.length > 0 ? 'block' : 'none';
+    if (videos.length > 0) caricaPlayerPrincipale();
+}
+
+function aggiornaLista() {
+    const list = document.getElementById('videoList');
+    list.innerHTML = videos.length === 0 ? '<p style="color:#888;text-align:center;padding:20px;">Nessun video</p>' : '';
+    videos.forEach((v, i) => {
+        const div = document.createElement('div');
+        div.className = 'video-item';
+        div.innerHTML = `<span><strong>${i+1}.</strong> ${v.url}</span> <button onclick="rimuoviVideo(${i})">Elimina</button>`;
+        list.appendChild(div);
+    });
+}
+
+function aggiornaAnteprimaSeparata() {
+    const container = document.getElementById('previewContainer');
+    container.innerHTML = '';
+    videos.forEach((v, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'video-wrapper';
+        wrap.innerHTML = `
+            <div class="video-number">${i+1}</div>
+            <iframe src="https://www.youtube.com/embed/${v.id}" frameborder="0" allowfullscreen></iframe>
+        `;
+        container.appendChild(wrap);
+    });
+}
+
+function caricaPlayerPrincipale() {
+    if (player) player.destroy();
+    const firstId = videos[0].id;
+    const playlistIds = videos.map(v => v.id).join(',');
+    player = new YT.Player('mainPlayer', {
+        height: '450',
+        width: '800',
+        videoId: firstId,
+        playerVars: { 'autoplay': 1, 'playlist': playlistIds, 'loop': 0, 'rel': 0, 'modestbranding': 1 },
+        events: { 'onReady': (e) => e.target.playVideo() }
+    });
+}
+
+function generaCodice() {
+    let html = '';
+    videos.forEach((v, i) => {
+        html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${v.id}" title="Video ${i+1}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>\n\n`;
+    });
+    if (videos.length > 1) {
+        const playlist = videos.map(v => v.id).join(',');
+        html += `<!-- Versione Playlist -->\n`;
+        html += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${videos[0].id}?playlist=${playlist}&autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+    }
+    return html;
+}
+
+function copiaCodice() {
+    document.getElementById('iframeCode').value = generaCodice();
+    const textarea = document.getElementById('iframeCode');
+    textarea.select();
+    document.execCommand('copy');
+    const btn = event.target;
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✅ Copiato!';
+    setTimeout(() => btn.innerHTML = orig, 2000);
+}
+
+function copyHostCode() {
+    navigator.clipboard.writeText(currentCode);
+    alert(`Codice ${currentCode} copiato negli appunti!`);
+}
+
+// Carica YouTube API
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+const firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+// Tasto Enter
+document.getElementById('youtubeUrl').addEventListener('keypress', e => {
+    if (e.key === 'Enter') aggiungiVideo();
+});
+</script>
 </body>
 </html>
